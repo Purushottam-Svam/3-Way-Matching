@@ -1,0 +1,120 @@
+{
+  "invoice_number": "671630",
+  "invoice_date": "7/10/20",
+  "date_ordered": "7/09/20",
+  "pick_ticket_no": "1446171-00",
+  "customer_po_no": "William",
+  "ship_via": "OUR TRUCK",
+  "terms": "NET 30",
+  "special_instructions": "driver to pick up ck for 661621-March inv $350.96",
+  "seller_information": {
+    "name": "Sam Tell Companies",
+    "address": "300 SMITH STREET FARMINGDALE, NEW YORK 11735",
+    "phone": "631-501-9700",
+    "fax": "631-501-9709",
+    "remit_to": {
+      "name": "Sam Tell & Son, Inc.",
+      "address": "P.O. Box 1180 Farmingdale, NY 11735"
+    }
+  },
+  "sold_to": {
+    "customer_id": "LOU0136",
+    "name": "LOUIE'S COS COB RESTAURANT COS COB GRILL, LLC",
+    "address": "136 RIVER ROAD EXTENTION COS COB, CT 06807",
+    "phone": "203-869-7770"
+  },
+  "ship_to": {
+    "customer_id": "LOU0136",
+    "name": "LOUIE'S COS COB RESTAURANT COS COB GRILL, LLC",
+    "address": "136 RIVER ROAD EXTENTION COS COB, CT 06807"
+  },
+  "line_items": [
+    {
+      "qty_ordered": 1.0,
+      "qty_shipped": 1.0,
+      "qty_back_ordered": 0.0,
+      "item_no": "GALLONPUMP",
+      "description": "dispensing pump for one gallon jug - Can use with handsaniti",
+      "price": 8.95,
+      "unit_of_measure": "EA",
+      "amount": 8.95
+    },
+    {
+      "qty_ordered": 2.0,
+      "qty_shipped": 2.0,
+      "qty_back_ordered": 0.0,
+      "item_no": "FACEMASK",
+      "description": "Disposable protective facemask elastic ear loop 50ea/bag",
+      "price": 54.0,
+      "unit_of_measure": "BAG",
+      "amount": 108.0
+    },
+    {
+      "qty_ordered": 2.0,
+      "qty_shipped": 2.0,
+      "qty_back_ordered": 0.0,
+      "item_no": "3902PFLG-M",
+      "description": "Latex Industrial Gloves Medium Powder Free 10 Boxes/ Case",
+      "price": 84.0,
+      "unit_of_measure": "CS",
+      "amount": 168.0
+    },
+    {
+      "qty_ordered": 2.0,
+      "qty_shipped": 2.0,
+      "qty_back_ordered": 0.0,
+      "item_no": "3902PFLG-L",
+      "description": "Latex Standard Gloves Large Powder Free 10 Boxes/Case",
+      "price": 84.0,
+      "unit_of_measure": "CS",
+      "amount": 168.0
+    },
+    {
+      "qty_ordered": 1.0,
+      "qty_shipped": 1.0,
+      "qty_back_ordered": 0.0,
+      "item_no": "PAFDIL18X5",
+      "description": "Foil Heavy 18\" X 500 Ft.",
+      "price": 95.88,
+      "unit_of_measure": "RL",
+      "amount": 95.88
+    },
+    {
+      "qty_ordered": 1.0,
+      "qty_shipped": 1.0,
+      "qty_back_ordered": 0.0,
+      "item_no": "CLEZOFF",
+      "description": "Easy Off Oven Clean 24oz 6/Cs",
+      "price": 104.0,
+      "unit_of_measure": "CS",
+      "amount": 104.01
+    },
+    {
+      "qty_ordered": 1.0,
+      "qty_shipped": 1.0,
+      "qty_back_ordered": 0.0,
+      "item_no": "G1380SC4",
+      "description": "St Grill & Oven Cleaner Gallon 4/1 Gallon Per Case",
+      "price": 51.13,
+      "unit_of_measure": "CS",
+      "amount": 51.13
+    },
+    {
+      "qty_ordered": 1.0,
+      "qty_shipped": 1.0,
+      "qty_back_ordered": 0.0,
+      "item_no": "PATCOTTON",
+      "description": "Cottonelle Toilet Tissue 2 Ply",
+      "price": 187.61,
+      "unit_of_measure": "CS",
+      "amount": 187.61
+    }
+  ],
+  "summary": {
+    "sub_total": null,
+    "shipping_and_handling": null,
+    "tax": null,
+    "deposit": null,
+    "balance_due": null
+  }
+}
