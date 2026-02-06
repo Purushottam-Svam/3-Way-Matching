@@ -42,12 +42,50 @@ VALUES:
 # -------------------------
 
 def _within_amount_tolerance(a, b):
+    if a is None or b is None:
+        return False
+
     tolerance = b * (AMOUNT_TOLERANCE_PERCENT / 100)
-    return abs(a - b) <= tolerance
+    return abs(float(a) - float(b)) <= tolerance
+
+
+def _compute_invoice_total(invoice: dict) -> float | None:
+    # Prefer extracted total
+    total = invoice.get("total_amount")
+    if isinstance(total, (int, float)):
+        return float(total)
+
+    # Fallback: compute from line items
+    total = 0.0
+    for item in invoice.get("line_items", []):
+        amt = item.get("amount")
+        if amt is None:
+            qty = item.get("quantity", item.get("qty", 0))
+            price = item.get("unit_price", item.get("price", 0))
+            amt = qty * price
+        total += amt
+
+    return round(total, 2) if total > 0 else None
+
+
+def _compute_grn_total(grn: dict) -> float | None:
+    # Prefer extracted total
+    total = grn.get("total")
+    if isinstance(total, (int, float)):
+        return float(total)
+
+    # Fallback: sum amounts if present
+    total = 0.0
+    for item in grn.get("line_items", []):
+        amt = item.get("amount")
+        if isinstance(amt, (int, float)):
+            total += amt
+
+    return round(total, 2) if total > 0 else None
 
 
 # -------------------------
-# Adapters (KEY FIX)
+# Adapters (shape normalization)
 # -------------------------
 
 def _unwrap_invoice(invoice: dict) -> dict:
@@ -80,7 +118,8 @@ def _unwrap_grn(grn: dict) -> dict:
 
     return {
         "po_number": grn.get("po_number"),
-        "line_items": grn.get("line_items", grn.get("items", []))
+        "line_items": grn.get("line_items", grn.get("items", [])),
+        "total": grn.get("total")
     }
 
 
@@ -104,14 +143,6 @@ def three_way_match(invoice: dict, po: dict, grn: dict) -> dict:
     # 1. HEADER MATCHING
     # -------------------------
 
-    # if invoice.get("po_reference") != po.get("po_number"):
-    #     confidence *= 0.1
-    #     return {
-    #         "status": "FAIL",
-    #         "reason": "INVOICE_PO_REFERENCE_MISMATCH",
-    #         "confidence": confidence
-    #     }
-
     if grn.get("po_number") != po.get("po_number"):
         confidence *= 0.1
         return {
@@ -120,7 +151,7 @@ def three_way_match(invoice: dict, po: dict, grn: dict) -> dict:
             "confidence": confidence
         }
 
-    # Vendor name (soft check, AI-assisted)
+    # Vendor name (soft check)
     vendor_values = [
         invoice.get("vendor_name", ""),
         po.get("vendor_name", "")
@@ -150,7 +181,10 @@ def three_way_match(invoice: dict, po: dict, grn: dict) -> dict:
     }
 
     grn_items = {
-        desc_norm[item["description"]]: item.get("received_quantity", item.get("qty_recv", 0))
+        desc_norm[item["description"]]: item.get(
+            "received_quantity",
+            item.get("qty_recv", 0)
+        )
         for item in grn_items_raw
     }
 
@@ -163,7 +197,10 @@ def three_way_match(invoice: dict, po: dict, grn: dict) -> dict:
                 "confidence": confidence
             }
 
-        if grn_items[norm_desc] < po_item.get("qty_ord", po_item.get("quantity", 0)):
+        if grn_items[norm_desc] < po_item.get(
+            "qty_ord",
+            po_item.get("quantity", 0)
+        ):
             confidence *= 0.6
             return {
                 "status": "FAIL",
@@ -172,17 +209,35 @@ def three_way_match(invoice: dict, po: dict, grn: dict) -> dict:
             }
 
     # -------------------------
-    # 3. TOTAL AMOUNT CHECK
+    # 3. TOTAL AMOUNT (TRUE 3-WAY)
     # -------------------------
 
-    if not _within_amount_tolerance(
-        invoice.get("total_amount", 0),
-        po.get("total_amount", 0)
-    ):
+    invoice_total = _compute_invoice_total(invoice)
+    po_total = po.get("total_amount")
+    grn_total = _compute_grn_total(grn)
+
+    if invoice_total is None or po_total is None:
+        return {
+            "status": "FAIL",
+            "reason": "MISSING_TOTAL_AMOUNT",
+            "confidence": confidence * 0.5
+        }
+
+    # Invoice ↔ PO
+    if not _within_amount_tolerance(invoice_total, po_total):
         confidence *= 0.7
         return {
             "status": "FAIL",
-            "reason": "AMOUNT_MISMATCH",
+            "reason": "INVOICE_PO_AMOUNT_MISMATCH",
+            "confidence": confidence
+        }
+
+    # GRN ↔ PO (only if GRN total exists)
+    if grn_total is not None and not _within_amount_tolerance(grn_total, po_total):
+        confidence *= 0.7
+        return {
+            "status": "FAIL",
+            "reason": "GRN_PO_AMOUNT_MISMATCH",
             "confidence": confidence
         }
 

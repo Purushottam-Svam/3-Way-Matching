@@ -12,3 +12,4 @@ po = extract_document("data/SamTell_PO_OCR_Fixed.pdf" , "po")
 grn = extract_document("data/SamTell_GRN_OCR_Fixed.pdf" , "grn")
 
 result = three_way_match(invoice, po, grn)
+print(result)

@@ -11,7 +11,9 @@ def log_debug(doc_type: str, step: str, payload):
     step: parsed_json | gemini_raw_output | non_json_response | etc
     """
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{doc_type}_{ts}_{step}.log"
+    safe_step = step.replace("/", "_")
+    filename = f"{doc_type}_{ts}_{safe_step}.log"
+
     path = os.path.join(DEBUG_DIR, filename)
 
     with open(path, "w", encoding="utf-8") as f:
