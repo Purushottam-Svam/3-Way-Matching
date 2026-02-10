@@ -6,8 +6,14 @@ from google.genai import types
 from pdf2image import convert_from_path
 
 from utilities.debug_logger import log_debug
+from OCR.invoice_model import InvoiceDocument
+from OCR.po_model import PurchaseOrderDocument
+from OCR.grn_model import GRNDocument
 
-# --- CONFIG ---
+
+# -------------------------
+# CONFIG
+# -------------------------
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -24,8 +30,9 @@ MODELS_TO_TRY = [
 ]
 
 
-
-
+# -------------------------
+# Helpers
+# -------------------------
 def _extract_json_block(text: str) -> str:
     start = text.find("{")
     end = text.rfind("}")
@@ -34,7 +41,10 @@ def _extract_json_block(text: str) -> str:
     return text[start:end + 1]
 
 
-def extract_document(pdf_path: str , doc_type: str) -> dict:
+# -------------------------
+# Main OCR + Parsing
+# -------------------------
+def extract_document(pdf_path: str, doc_type: str) -> dict:
     # -------------------------
     # 1. PDF → Image
     # -------------------------
@@ -46,13 +56,13 @@ def extract_document(pdf_path: str , doc_type: str) -> dict:
     temp_img = "__temp_page.png"
     images[0].save(temp_img, "PNG")
 
-    log_debug(doc_type ,"pdf_to_image_done", pdf_path)
+    log_debug(doc_type, "pdf_to_image_done", pdf_path)
 
     with open(temp_img, "rb") as f:
         image_bytes = f.read()
 
     # -------------------------
-    # 2. Prompt (UNCHANGED STYLE)
+    # 2. Prompt
     # -------------------------
     prompt = """
 Return ONLY raw JSON. The response must start with { and end with }.
@@ -67,7 +77,7 @@ Return raw JSON text.
     response_text = None
 
     # -------------------------
-    # 3. Try models (UNCHANGED LOGIC)
+    # 3. Try models
     # -------------------------
     for model_name in MODELS_TO_TRY:
         try:
@@ -93,21 +103,38 @@ Return raw JSON text.
         raise RuntimeError("Gemini extraction failed for all models")
 
     # -------------------------
-    # 4. Parse JSON (SAFE)
+    # 4. Parse JSON (RAW)
     # -------------------------
-    raw = response_text.strip()
-    log_debug(doc_type, "gemini_raw_output", raw)
+    raw_text = response_text.strip()
+    log_debug(doc_type, "gemini_raw_output", raw_text)
 
-    json_text = _extract_json_block(raw)
+    json_text = _extract_json_block(raw_text)
 
     if not json_text:
-        log_debug(doc_type, "non_json_response", raw)
+        log_debug(doc_type, "non_json_response", raw_text)
         raise RuntimeError("Gemini did not return parsable JSON")
 
     try:
-        data = json.loads(json_text)
-        log_debug(doc_type, "parsed_json", data)
-        return data
+        raw_data = json.loads(json_text)
+        log_debug(doc_type, "parsed_json_raw", raw_data)
     except json.JSONDecodeError:
         log_debug(doc_type, "json_parse_error", json_text)
         raise
+
+    # -------------------------
+    # 5. BaseModel Normalization
+    # -------------------------
+    if doc_type == "invoice":
+        parsed = InvoiceDocument.model_validate(raw_data).model_dump()
+
+    elif doc_type == "po":
+        parsed = PurchaseOrderDocument.model_validate(raw_data).model_dump()
+
+    elif doc_type == "grn":
+        parsed = GRNDocument.model_validate(raw_data).model_dump()
+
+    else:
+        raise RuntimeError(f"Unknown doc_type: {doc_type}")
+
+    log_debug(doc_type, "parsed_json_normalized", parsed)
+    return parsed
